@@ -85,3 +85,11 @@ certs/
 
 
 readme_ignore.md
+
+
+node_modules/
+/prisma/generated/
+
+# Bun Lockfile / Logs
+bun.lockb
+*.log

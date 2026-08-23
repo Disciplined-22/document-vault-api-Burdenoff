@@ -1,0 +1,40 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PARENT MODEL: Stores collection metadata
+model Collection {
+  id        String     @id @default(uuid()) // Unique primary key generated as a UUID
+  name      String                          // Collection display name
+  slug      String                          // URL-friendly identifier string
+  createdAt DateTime   @default(now())      // Auto-set creation timestamp
+
+  // Prisma virtual relation: Enables nested JOIN queries to fetch child documents
+  documents Document[] 
+}
+
+// CHILD MODEL: Stores document content and references Collection
+model Document {
+  id           String     @id @default(uuid()) // Unique primary key generated as a UUID
+  title        String                          // Document title
+  content      String                          // Body text of the document
+  tags         String[]                        // PostgreSQL text array for tag labels
+  isArchived   Boolean    @default(false)      // Defaults to false so new documents start active
+  createdAt    DateTime   @default(now())      // Auto-set creation timestamp
+
+  // 1. Foreign Key column on Child (Document) referencing Parent (Collection.id)
+  collectionId String
+
+  // 2. Child-to-Parent relation: maps Document.collectionId -> Collection.id
+  // onDelete: Cascade automatically deletes child Documents if parent Collection is removed
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  // Database Indexes for query performance
+  @@index([collectionId]) // Speeds up filtering/fetching documents by collection
+  @@index([isArchived])   // Speeds up filtering active vs. archived documents
+}
