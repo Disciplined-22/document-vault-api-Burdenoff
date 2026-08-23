@@ -1,0 +1,87 @@
+# =========================
+# Python basics
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# =========================
+# Virtual environments
+# =========================
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# =========================
+# FastAPI / Python tooling
+# =========================
+*.log
+*.sqlite3
+*.db
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# ruff / lint caches
+.ruff_cache/
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Environment variables
+# =========================
+.env*
+
+# =========================
+# Docker (optional cleanup)
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Build / dist
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# =========================
+# Uvicorn / runtime
+# =========================
+*.pid
+
+dump_files/
+
+
+
+# =========================
+# Kafka SSL Certificates / Keys
+# =========================
+certs/
+*.pem
+*.cert
+*.key
+
+
+
+readme_ignore.md
