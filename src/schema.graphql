@@ -26,6 +26,28 @@ type Document {
 
 
 # -----------------------------------------------------------------------------
+# PAGINATION TYPES (Relay Cursor Connection Pattern)
+# -----------------------------------------------------------------------------
+
+# Top-level wrapper returned by the `documents` query
+type DocumentConnection {
+  edges: [DocumentEdge!]! # Array of wrapped document nodes with their cursors
+  pageInfo: PageInfo!     # Metadata required for fetching the next page
+}
+
+# Individual edge containing a single item and its unique pagination cursor
+type DocumentEdge {
+  cursor: String! # Opaque string (the document ID) used to request next page
+  node: Document! # The actual document data
+}
+
+# Metadata describing pagination status
+type PageInfo {
+  endCursor: String       # Cursor of the last item in the current batch
+  hasNextPage: Boolean!   # True if additional items exist past this page
+}
+
+# -----------------------------------------------------------------------------
 # READ OPERATIONS (Queries)
 # -----------------------------------------------------------------------------
 
@@ -35,5 +57,14 @@ type Query {
 
   # Fetches a single collection by ID, returning null if missing
   collection(id: ID!): Collection
+
+    # Fetches documents using search, filters, and cursor-based pagination
+  documents(
+    collectionId: ID      # Filter by parent collection
+    search: String        # Substring search on title or content
+    isArchived: Boolean   # Filter by archived state
+    take: Int             # Page size limit (defaults to 10)
+    cursor: String        # ID cursor to paginate after
+  ): DocumentConnection!
 
 }
