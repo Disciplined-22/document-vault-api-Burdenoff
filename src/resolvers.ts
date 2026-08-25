@@ -133,6 +133,230 @@ export const resolvers = {
   },
 
 
+
+  // ===========================================================================
+  // WRITE OPERATIONS (Mutations)
+  // ===========================================================================
+  Mutation: {
+    /**
+     * Creates a new collection with sanitized input strings.
+     * Validates that the name is non-empty and the slug conforms to SLUG_REGEX.
+     */
+    createCollection: async (
+        _: unknown,
+        args: { name: string; slug: string },
+        ctx: Context
+      ) => {
+        const cleanName = args.name?.trim();
+        const cleanSlug = args.slug?.trim().toLowerCase();
+      
+        if (!cleanName) {
+          throw new GraphQLError("Collection name cannot be empty.", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+      
+        if (!cleanSlug || !SLUG_REGEX.test(cleanSlug)) {
+          throw new GraphQLError(
+            "Slug must be lowercase, alphanumeric, and hyphen-separated (e.g., 'tech-docs').",
+            { extensions: { code: "BAD_USER_INPUT" } }
+          );
+        }
+      
+        try {
+          return await ctx.prisma.collection.create({
+            data: {
+              name: cleanName,
+              slug: cleanSlug,
+            },
+          });
+        } catch (error) {
+          // Catch Prisma's Unique Constraint Violation
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+          ) {
+            throw new GraphQLError(`A collection with slug "${cleanSlug}" already exists.`, {
+              extensions: { code: "BAD_USER_INPUT" },
+            });
+          }
+          throw error;
+        }
+      },
+
+    /**
+     * Creates a new document within a target collection.
+     * Rejects empty title/content and throws NOT_FOUND if the target collection does not exist.
+     */
+    createDocument: async (
+      _: unknown,
+      args: {
+        title: string;
+        content: string;
+        tags?: string[];
+        collectionId: string;
+      },
+      ctx: Context
+    ) => {
+      const cleanTitle = args.title?.trim();
+      const cleanContent = args.content?.trim();
+
+      if (!cleanTitle) {
+        throw new GraphQLError("Document title cannot be empty.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      if (!cleanContent) {
+        throw new GraphQLError("Document content cannot be empty.", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const collectionExists = await ctx.prisma.collection.findUnique({
+        where: { id: args.collectionId },
+      });
+
+      if (!collectionExists) {
+        throw new GraphQLError(
+          `Collection with ID "${args.collectionId}" does not exist.`,
+          { extensions: { code: "NOT_FOUND" } }
+        );
+      }
+
+      return ctx.prisma.document.create({
+        data: {
+          title: cleanTitle,
+          content: cleanContent,
+          tags: args.tags || [],
+          collectionId: args.collectionId,
+        },
+      });
+    },
+
+    /**
+     * Dynamically updates specified fields on a document.
+     * Checks document existence and rejects empty string updates for title/content.
+     */
+    updateDocument: async (
+      _: unknown,
+      args: {
+        id: string;
+        title?: string;
+        content?: string;
+        tags?: string[];
+        isArchived?: boolean;
+      },
+      ctx: Context
+    ) => {
+      const docExists = await ctx.prisma.document.findUnique({
+        where: { id: args.id },
+      });
+
+      if (!docExists) {
+        throw new GraphQLError(`Document with ID "${args.id}" not found.`, {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
+      // Strongly-typed Prisma update payload container
+      const updateData: Prisma.DocumentUpdateInput = {};
+
+      if (args.title !== undefined) {
+        const cleanTitle = args.title.trim();
+        if (!cleanTitle) {
+          throw new GraphQLError("Document title cannot be empty.", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        updateData.title = cleanTitle;
+      }
+
+      if (args.content !== undefined) {
+        const cleanContent = args.content.trim();
+        if (!cleanContent) {
+          throw new GraphQLError("Document content cannot be empty.", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        updateData.content = cleanContent;
+      }
+
+      if (args.tags !== undefined) {
+        updateData.tags = args.tags;
+      }
+
+      if (args.isArchived !== undefined) {
+        updateData.isArchived = args.isArchived;
+      }
+
+      return ctx.prisma.document.update({
+        where: { id: args.id },
+        data: updateData,
+      });
+    },
+
+    /**
+     * Hard-deletes a document by ID. Returns true on success.
+     * Throws NOT_FOUND if the document does not exist.
+     */
+    deleteDocument: async (_: unknown, args: { id: string }, ctx: Context) => {
+      const docExists = await ctx.prisma.document.findUnique({
+        where: { id: args.id },
+      });
+
+      if (!docExists) {
+        throw new GraphQLError(`Document with ID "${args.id}" not found.`, {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
+      await ctx.prisma.document.delete({
+        where: { id: args.id },
+      });
+
+      return true;
+    },
+
+    /**
+     * Reassigns a document to a different collection.
+     * Verifies that both the document and the target collection exist before moving.
+     */
+    moveDocument: async (
+      _: unknown,
+      args: { id: string; collectionId: string },
+      ctx: Context
+    ) => {
+      const docExists = await ctx.prisma.document.findUnique({
+        where: { id: args.id },
+      });
+
+      if (!docExists) {
+        throw new GraphQLError(`Document with ID "${args.id}" not found.`, {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
+      const targetCollectionExists = await ctx.prisma.collection.findUnique({
+        where: { id: args.collectionId },
+      });
+
+      if (!targetCollectionExists) {
+        throw new GraphQLError(
+          `Target collection with ID "${args.collectionId}" not found.`,
+          { extensions: { code: "NOT_FOUND" } }
+        );
+      }
+
+      return ctx.prisma.document.update({
+        where: { id: args.id },
+        data: { collectionId: args.collectionId },
+      });
+    },
+  },
+
+
+  
   // ===========================================================================
   // FIELD RESOLVERS & NESTED RELATIONS
   // ===========================================================================

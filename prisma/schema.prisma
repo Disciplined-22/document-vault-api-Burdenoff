@@ -11,7 +11,7 @@ generator client {
 model Collection {
   id        String     @id @default(uuid()) // Unique primary key generated as a UUID
   name      String                          // Collection display name
-  slug      String                          // URL-friendly identifier string
+  slug      String     @unique                     // URL-friendly identifier string
   createdAt DateTime   @default(now())      // Auto-set creation timestamp
 
   // Prisma virtual relation: Enables nested JOIN queries to fetch child documents

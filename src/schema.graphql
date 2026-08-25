@@ -68,3 +68,37 @@ type Query {
   ): DocumentConnection!
 
 }
+
+
+
+# -----------------------------------------------------------------------------
+# WRITE OPERATIONS (Mutations)
+# -----------------------------------------------------------------------------
+
+type Mutation {
+  # Creates a new collection; enforces valid slug format
+  createCollection(name: String!, slug: String!): Collection!
+
+  # Creates a new document inside a collection; rejects empty strings
+  createDocument(
+    title: String!
+    content: String!
+    tags: [String!]
+    collectionId: ID!
+  ): Document!
+
+  # Updates existing document fields conditionally
+  updateDocument(
+    id: ID!
+    title: String
+    content: String
+    tags: [String!]
+    isArchived: Boolean
+  ): Document!
+
+  # Hard deletes a document by ID
+  deleteDocument(id: ID!): Boolean!
+
+  # Reassigns a document from its current collection to a new collection
+  moveDocument(id: ID!, collectionId: ID!): Document!
+}
