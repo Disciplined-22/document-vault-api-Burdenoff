@@ -1,6 +1,6 @@
 import { createYoga, createSchema } from "graphql-yoga";
 import { PrismaClient } from "@prisma/client";
-import { resolvers } from "./resolvers.ts";
+import { resolvers } from "./resolvers";
 
 /**
  * Instantiate the Prisma Client to manage connection pooling 

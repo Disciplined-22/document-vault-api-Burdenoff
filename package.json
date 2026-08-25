@@ -5,7 +5,9 @@
     "scripts": {
       "dev": "bun run --watch src/index.ts",
       "gendb": "cp -n .env.example .env || true && bunx prisma migrate dev",
-      "db:studio": "bunx prisma studio"
+      "db:studio": "bunx prisma studio",
+      "typecheck": "tsc --noEmit",
+      "sanity": "bun run typecheck && bun test"
     },
     "dependencies": {
       "@prisma/client": "^5.22.0",
