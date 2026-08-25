@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------------
+# DOMAIN MODELS
+# -----------------------------------------------------------------------------
+
+# Collection model representing a folder/grouping of documents
+type Collection {
+  id: ID!                # Non-nullable unique identifier (UUID)
+  name: String!          # Display name of collection (required)
+  slug: String!          # URL-friendly slug (e.g., "tech-docs")
+  createdAt: String!     # ISO timestamp of creation
+  documents: [Document!]! # Nested documents belonging to this collection
+}
+
+
+# Document model representing stored text content
+type Document {
+  id: ID!                # Non-nullable unique identifier (UUID)
+  title: String!         # Document title (required, non-empty)
+  content: String!       # Body text content (required, non-empty)
+  tags: [String!]!       # List of tag strings (cannot contain null items)
+  isArchived: Boolean!   # Status flag indicating if document is archived
+  createdAt: String!     # ISO timestamp of creation
+  collectionId: ID!      # Foreign key referencing parent Collection ID
+  collection: Collection # Parent Collection object resolved via relation
+}
+
+
+# -----------------------------------------------------------------------------
+# READ OPERATIONS (Queries)
+# -----------------------------------------------------------------------------
+
+type Query {
+  # Fetches all collections ordered by newest first
+  collections(take: Int): [Collection!]!
+
+  # Fetches a single collection by ID, returning null if missing
+  collection(id: ID!): Collection
+
+}

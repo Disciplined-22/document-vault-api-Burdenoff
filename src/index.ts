@@ -1,5 +1,6 @@
 import { createYoga, createSchema } from "graphql-yoga";
 import { PrismaClient } from "@prisma/client";
+import { resolvers } from "./resolvers.ts";
 
 /**
  * Instantiate the Prisma Client to manage connection pooling 
@@ -11,12 +12,17 @@ const prisma = new PrismaClient();
  * Asynchronously load the GraphQL SDL (Schema Definition Language) string
  * directly from disk using Bun's native top-level await file API.
  */
+const typeDefs = await Bun.file("src/schema.graphql").text();
 
 /**
  * Initialize the GraphQL Yoga engine by binding the executable schema
  * and injecting global request context (Prisma DB client).
  */
 const yoga = createYoga({
+  schema: createSchema({
+    typeDefs,
+    resolvers,
+  }),
   // Dependency injection: Attach Prisma instance to the request context
   // making it available in all resolvers via the 3rd parameter `ctx.prisma`
   context: {
