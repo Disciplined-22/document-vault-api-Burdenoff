@@ -50,7 +50,8 @@ Thumbs.db
 # =========================
 # Environment variables
 # =========================
-.env*
+.env
+
 
 # =========================
 # Docker (optional cleanup)

@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
       "dev": "bun run --watch src/index.ts",
-      "gendb": "bunx prisma migrate dev",
+      "gendb": "cp -n .env.example .env || true && bunx prisma migrate dev",
       "db:studio": "bunx prisma studio"
     },
     "dependencies": {
