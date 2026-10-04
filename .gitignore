@@ -50,7 +50,8 @@ Thumbs.db
 # =========================
 # Environment variables
 # =========================
-.env*
+.env
+
 
 # =========================
 # Docker (optional cleanup)
@@ -85,3 +86,11 @@ certs/
 
 
 readme_ignore.md
+
+
+node_modules/
+/prisma/generated/
+
+# Bun Lockfile / Logs
+bun.lockb
+*.log

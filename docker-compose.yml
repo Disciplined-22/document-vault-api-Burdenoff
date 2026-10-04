@@ -1,0 +1,35 @@
+# Specifies the Docker Compose file format version for engine compatibility
+# version: '3.8'
+
+# Container definitions block
+services:
+  # Service identifier for orchestrating container dependencies
+  postgres:
+    # Official lightweight Alpine Linux image for PostgreSQL 16 (reduces footprint)
+    image: postgres:16-alpine
+
+    # Fixed container name for predictable CLI targeting via `docker exec`
+    container_name: document_vault_db
+
+    # Restart policy: ensures DB recovers automatically if process crashes
+    restart: always
+
+    # Environment variables injected directly into the PostgreSQL process at boot
+    environment:
+      POSTGRES_USER: postgres              # Superuser account name
+      POSTGRES_PASSWORD: postgrespassword  # Superuser password
+      POSTGRES_DB: document_vault          # Initial database created on first boot
+
+    # Port mapping: <Host Port>:<Container Port>
+    # Binds port 5432 on localhost to PostgreSQL's internal port 5432
+    ports:
+      - "5432:5432"
+
+    # Volume binding: attaches persistent storage engine to the container directory
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Top-level Named Volume declaration
+# Ensures database data survives container destruction (`docker compose down`)
+volumes:
+  postgres_data:

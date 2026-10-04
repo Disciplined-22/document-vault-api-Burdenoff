@@ -1,0 +1,104 @@
+# -----------------------------------------------------------------------------
+# DOMAIN MODELS
+# -----------------------------------------------------------------------------
+
+# Collection model representing a folder/grouping of documents
+type Collection {
+  id: ID!                # Non-nullable unique identifier (UUID)
+  name: String!          # Display name of collection (required)
+  slug: String!          # URL-friendly slug (e.g., "tech-docs")
+  createdAt: String!     # ISO timestamp of creation
+  documents: [Document!]! # Nested documents belonging to this collection
+}
+
+
+# Document model representing stored text content
+type Document {
+  id: ID!                # Non-nullable unique identifier (UUID)
+  title: String!         # Document title (required, non-empty)
+  content: String!       # Body text content (required, non-empty)
+  tags: [String!]!       # List of tag strings (cannot contain null items)
+  isArchived: Boolean!   # Status flag indicating if document is archived
+  createdAt: String!     # ISO timestamp of creation
+  collectionId: ID!      # Foreign key referencing parent Collection ID
+  collection: Collection # Parent Collection object resolved via relation
+}
+
+
+# -----------------------------------------------------------------------------
+# PAGINATION TYPES (Relay Cursor Connection Pattern)
+# -----------------------------------------------------------------------------
+
+# Top-level wrapper returned by the `documents` query
+type DocumentConnection {
+  edges: [DocumentEdge!]! # Array of wrapped document nodes with their cursors
+  pageInfo: PageInfo!     # Metadata required for fetching the next page
+}
+
+# Individual edge containing a single item and its unique pagination cursor
+type DocumentEdge {
+  cursor: String! # Opaque string (the document ID) used to request next page
+  node: Document! # The actual document data
+}
+
+# Metadata describing pagination status
+type PageInfo {
+  endCursor: String       # Cursor of the last item in the current batch
+  hasNextPage: Boolean!   # True if additional items exist past this page
+}
+
+# -----------------------------------------------------------------------------
+# READ OPERATIONS (Queries)
+# -----------------------------------------------------------------------------
+
+type Query {
+  # Fetches all collections ordered by newest first
+  collections(take: Int): [Collection!]!
+
+  # Fetches a single collection by ID, returning null if missing
+  collection(id: ID!): Collection
+
+    # Fetches documents using search, filters, and cursor-based pagination
+  documents(
+    collectionId: ID      # Filter by parent collection
+    search: String        # Substring search on title or content
+    isArchived: Boolean   # Filter by archived state
+    take: Int             # Page size limit (defaults to 10)
+    cursor: String        # ID cursor to paginate after
+  ): DocumentConnection!
+
+}
+
+
+
+# -----------------------------------------------------------------------------
+# WRITE OPERATIONS (Mutations)
+# -----------------------------------------------------------------------------
+
+type Mutation {
+  # Creates a new collection; enforces valid slug format
+  createCollection(name: String!, slug: String!): Collection!
+
+  # Creates a new document inside a collection; rejects empty strings
+  createDocument(
+    title: String!
+    content: String!
+    tags: [String!]
+    collectionId: ID!
+  ): Document!
+
+  # Updates existing document fields conditionally
+  updateDocument(
+    id: ID!
+    title: String
+    content: String
+    tags: [String!]
+    isArchived: Boolean
+  ): Document!
+
+  # Hard deletes a document by ID
+  deleteDocument(id: ID!): Boolean!
+
+  # Reassigns a document from its current collection to a new collection
+  moveDocument(id: ID!, collectionId: ID!): Document!
+}
